@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches: [main]
+
 permissions:
   contents: write
+
 jobs:
   build:
     runs-on: self-hosted
@@ -43,16 +45,16 @@ jobs:
           docker save ai-ops-copilot-mcp-server:$SHA | sudo k3s ctr images import -
           docker save ai-ops-copilot-operator:$SHA | sudo k3s ctr images import -
 
-      - name: Update manifests with new image tag
+      - name: Update Helm values with new image tag
         run: |
-          sed -i "s|ai-ops-copilot-agent:.*|ai-ops-copilot-agent:$SHA|" k8s/agent.yaml
-          sed -i "s|ai-ops-copilot-mcp-server:.*|ai-ops-copilot-mcp-server:$SHA|" k8s/mcp-server.yaml
-          sed -i "s|ai-ops-copilot-operator:.*|ai-ops-copilot-operator:$SHA|" k8s/operator.yaml
+          yq -i ".agent.tag = \"$SHA\"" charts/ai-ops-copilot/values.yaml
+          yq -i ".mcpServer.tag = \"$SHA\"" charts/ai-ops-copilot/values.yaml
+          yq -i ".operator.tag = \"$SHA\"" charts/ai-ops-copilot/values.yaml
 
       - name: Commit updated manifests
         run: |
           git config user.name "ci-bot"
           git config user.email "ci-bot@localhost"
-          git add k8s/
+          git add charts/
           git commit -m "Update image tags to $SHA" || echo "no changes to commit"
           git push
