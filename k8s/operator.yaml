@@ -13,7 +13,7 @@ spec:
       serviceAccountName: aiops-sa
       containers:
         - name: incident-operator
-          image: ai-ops-copilot-operator:600c840
+          image: ai-ops-copilot-operator:e9a6f1a
           imagePullPolicy: Never
           env:
             - name: AGENT_URL

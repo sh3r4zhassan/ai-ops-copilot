@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: agent
-          image: ai-ops-copilot-agent:600c840
+          image: ai-ops-copilot-agent:e9a6f1a
           imagePullPolicy: Never
           env:
             - name: QDRANT_HOST
