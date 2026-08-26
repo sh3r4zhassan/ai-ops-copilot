@@ -13,7 +13,7 @@ spec:
       serviceAccountName: aiops-sa
       containers:
         - name: mcp-server
-          image: ai-ops-copilot-mcp-server:latest
+          image: ai-ops-copilot-mcp-server:600c840
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
