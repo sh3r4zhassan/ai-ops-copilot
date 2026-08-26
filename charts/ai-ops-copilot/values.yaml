@@ -1,19 +1,15 @@
 qdrant:
   image: qdrant/qdrant
   storagePath: /home/sheraz/ai-ops-copilot/qdrant_storage
-
 ollama:
   image: ollama/ollama
   modelsPath: /usr/share/ollama/.ollama
-
 mcpServer:
   image: ai-ops-copilot-mcp-server
-  tag: latest
-
+  tag: 1477b0c
 agent:
   image: ai-ops-copilot-agent
-  tag: latest
-
+  tag: 1477b0c
 operator:
   image: ai-ops-copilot-operator
-  tag: latest
+  tag: 1477b0c
