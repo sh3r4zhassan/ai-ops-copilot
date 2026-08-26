@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: agent }
+  template:
+    metadata:
+      labels: { app: agent }
+    spec:
+      containers:
+        - name: agent
+          image: "{{ .Values.agent.image }}:{{ .Values.agent.tag }}"
+          imagePullPolicy: Never
+          env:
+            - name: QDRANT_HOST
+              value: qdrant
+            - name: OLLAMA_HOST
+              value: ollama
+            - name: MCP_SERVER_URL
+              value: http://mcp-server:8080/
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent
+spec:
+  selector: { app: agent }
+  ports:
+    - port: 5000
+      targetPort: 5000

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incident-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: incident-operator }
+  template:
+    metadata:
+      labels: { app: incident-operator }
+    spec:
+      serviceAccountName: aiops-sa
+      containers:
+        - name: incident-operator
+          image: "{{ .Values.operator.image }}:{{ .Values.operator.tag }}"
+          imagePullPolicy: Never
+          env:
+            - name: AGENT_URL
+              value: http://agent:5000/diagnose
