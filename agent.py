@@ -1,9 +1,9 @@
 import json
+import os
 import sys
 import requests
 from tools import TOOLS
 
-import os
 OLLAMA_URL = f"http://{os.getenv('OLLAMA_HOST', 'localhost')}:11434/api/generate"
 MODEL_NAME = "sre-copilot"
 
@@ -21,7 +21,7 @@ To use a tool:
 To give your final answer:
 {"thought": "...", "final_answer": "..."}
 
-Think steps by step. Only give a final_answer once you actually have enough information from tool results.
+Think step by step. Only give a final_answer once you actually have enough information from tool results.
 """
 
 
@@ -62,9 +62,10 @@ def run_agent(user_question: str, max_steps: int = 5) -> str:
             continue
 
         try:
-    	observation = TOOLS[action](**action_input)
-	except TypeError as e:
-    		observation = f"error calling tool '{action}': {e}. Check the argument names and try again."
+            observation = TOOLS[action](**action_input)
+        except TypeError as e:
+            observation = f"error calling tool '{action}': {e}. Check the argument names and try again."
+
         transcript += (
             f"\nThought: {parsed.get('thought', '')}\n"
             f"Action: {action}({action_input})\n"
