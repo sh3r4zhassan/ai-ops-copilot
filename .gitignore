@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+qdrant_storage/
+*.gguf
+mcp-server/k8s-mcp-server
+operator/incident-operator
+actions-runner/

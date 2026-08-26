@@ -1,0 +1,9 @@
+apiVersion: aiops.example.com/v1alpha1
+kind: Incident
+metadata:
+  name: demo-incident-1
+spec:
+  podName: broken-app-c69d4d577-vtlnh
+  namespace: default
+  symptom: "Pod is stuck in CrashLoopBackOff and won't start"
+  approved: false

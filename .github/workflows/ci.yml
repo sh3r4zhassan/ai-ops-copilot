@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint Python
+        run: |
+          source venv/bin/activate
+          pip install ruff --quiet
+          ruff check . || true
+
+      - name: Build and vet Go services
+        run: |
+          cd mcp-server && go build ./... && go vet ./...
+          cd ../operator && go build ./... && go vet ./...
+
+      - name: Build Docker images
+        run: |
+          docker compose build
+
+      - name: Tag images with commit SHA
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          docker tag ai-ops-copilot-agent:latest ai-ops-copilot-agent:$SHA
+          docker tag ai-ops-copilot-mcp-server:latest ai-ops-copilot-mcp-server:$SHA
+          docker tag ai-ops-copilot-operator:latest ai-ops-copilot-operator:$SHA
+          echo "SHA=$SHA" >> $GITHUB_ENV
+
+      - name: Import images into k3s
+        run: |
+          docker save ai-ops-copilot-agent:$SHA | sudo k3s ctr images import -
+          docker save ai-ops-copilot-mcp-server:$SHA | sudo k3s ctr images import -
+          docker save ai-ops-copilot-operator:$SHA | sudo k3s ctr images import -
+
+      - name: Update manifests with new image tag
+        run: |
+          sed -i "s|ai-ops-copilot-agent:.*|ai-ops-copilot-agent:$SHA|" k8s/agent.yaml
+          sed -i "s|ai-ops-copilot-mcp-server:.*|ai-ops-copilot-mcp-server:$SHA|" k8s/mcp-server.yaml
+          sed -i "s|ai-ops-copilot-operator:.*|ai-ops-copilot-operator:$SHA|" k8s/operator.yaml
+
+      - name: Commit updated manifests
+        run: |
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@localhost"
+          git add k8s/
+          git commit -m "Update image tags to $SHA" || echo "no changes to commit"
+          git push

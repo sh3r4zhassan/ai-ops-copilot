@@ -1,0 +1,50 @@
+services:
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - /usr/share/ollama/.ollama:/root/.ollama
+
+  mcp-server:
+    build:
+      context: ./mcp-server
+    environment:
+      - KUBECONFIG=/root/.kube/config
+    volumes:
+      - ~/.kube/config-docker:/root/.kube/config:ro
+    ports:
+      - "8080:8080"
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    environment:
+      - QDRANT_HOST=qdrant
+      - OLLAMA_HOST=ollama
+      - MCP_SERVER_URL=http://mcp-server:8080/
+    depends_on:
+      - qdrant
+      - ollama
+      - mcp-server
+    ports:
+      - "5000:5000"
+
+  operator:
+    build:
+      context: ./operator
+    environment:
+      - KUBECONFIG=/root/.kube/config
+      - AGENT_URL=http://agent:5000/diagnose
+    volumes:
+      - ~/.kube/config-docker:/root/.kube/config:ro
+    depends_on:
+      - agent

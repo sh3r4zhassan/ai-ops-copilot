@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: broken-app }
+  template:
+    metadata:
+      labels: { app: broken-app }
+    spec:
+      containers:
+        - name: broken-app
+          image: busybox
+          command: ["sh", "-c", "exit 1"]
