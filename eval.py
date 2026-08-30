@@ -12,7 +12,7 @@ from tools import search_runbooks
 AGENT_URL = "http://localhost:5000/diagnose"
 API_KEY = "7511cbe447693462008585d9af2fb10a3467b33923bf0f32"
 
-judge_llm = ChatOllama(model="llama3.2:3b")
+judge_llm = ChatOllama(model="llama3.2:3b", base_url="http://localhost:31434")
 judge_embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 records = []
