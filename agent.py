@@ -22,8 +22,9 @@ To give your final answer:
 {"thought": "...", "final_answer": "..."}
 
 Think step by step. Only give a final_answer once you actually have enough information from tool results.
+Never use final_answer to describe what you are about to do next — it must state an actual conclusion,
+reached after using at least one tool and reading its real result.
 """
-
 
 def call_llm(prompt: str) -> str:
     response = requests.post(
@@ -40,6 +41,7 @@ def call_llm(prompt: str) -> str:
 
 def run_agent(user_question: str, max_steps: int = 5) -> str:
     transcript = f"{SYSTEM_PROMPT}\n\nUser question: {user_question}\n"
+    tools_used = 0
 
     for step in range(max_steps):
         raw = call_llm(transcript)
@@ -52,6 +54,13 @@ def run_agent(user_question: str, max_steps: int = 5) -> str:
             continue
 
         if "final_answer" in parsed:
+            if tools_used == 0:
+                transcript += (
+                    "\n(You gave a final_answer without using any tool first. "
+                    "You must call search_runbooks or get_pod_status at least once "
+                    "and use its real result before answering. Try again.)\n"
+                )
+                continue
             return parsed["final_answer"]
 
         action = parsed.get("action")
@@ -63,6 +72,7 @@ def run_agent(user_question: str, max_steps: int = 5) -> str:
 
         try:
             observation = TOOLS[action](**action_input)
+            tools_used += 1
         except TypeError as e:
             observation = f"error calling tool '{action}': {e}. Check the argument names and try again."
 
@@ -73,7 +83,6 @@ def run_agent(user_question: str, max_steps: int = 5) -> str:
         )
 
     return "Agent could not reach a final answer within the step limit."
-
 
 if __name__ == "__main__":
     question = sys.argv[1] if len(sys.argv) > 1 else "Why might my pods be crashing?"
