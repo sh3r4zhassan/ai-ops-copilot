@@ -1,8 +1,11 @@
 import os
 from flask import Flask, request, jsonify
 from agent import run_agent
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
 API_KEY = os.getenv("API_KEY", "")
 
 

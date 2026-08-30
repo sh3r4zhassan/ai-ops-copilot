@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Ops Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5F6F8;
+    --card: #FFFFFF;
+    --ink: #1B2430;
+    --muted: #6B7685;
+    --console-bg: #10151D;
+    --console-text: #D7DCE3;
+    --console-muted: #8891A0;
+    --signal: #5EEAD4;
+    --alert: #F2994A;
+    --danger: #F26D6D;
+    --line: #E2E5EA;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--signal);
+    box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.18);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .dot { animation: pulse 2.4s ease-in-out infinite; }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .lede {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 20px;
+    max-width: 54ch;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 4px;
+    box-shadow: 0 1px 2px rgba(20, 24, 32, 0.04);
+  }
+
+  .console {
+    background: var(--console-bg);
+    border-radius: 10px;
+    padding: 18px 18px 6px;
+    height: 340px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .console::-webkit-scrollbar { width: 8px; }
+  .console::-webkit-scrollbar-thumb { background: #2A3342; border-radius: 4px; }
+
+  .entry { margin-bottom: 14px; }
+
+  .ts {
+    color: var(--console-muted);
+    margin-right: 8px;
+  }
+
+  .q { color: var(--console-text); }
+  .q::before { content: "> "; color: var(--signal); }
+
+  .a {
+    color: var(--console-text);
+    white-space: pre-wrap;
+    display: block;
+    margin-top: 4px;
+    padding-left: 16px;
+    border-left: 2px solid #232C3A;
+  }
+
+  .a.pending { color: var(--alert); }
+  .a.error { color: var(--danger); }
+  .a.pending::before { content: "\25CF "; }
+  .a.ok::before { content: "\25CF "; color: var(--signal); }
+  .a.error::before { content: "\25CF "; }
+
+  .empty {
+    color: var(--console-muted);
+    font-style: normal;
+  }
+
+  form {
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .input-shell {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0 4px 0 14px;
+  }
+
+  .prompt-char {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    margin-right: 6px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 12px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+  }
+
+  input[type="text"]:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  button {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0 20px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  button:hover { opacity: 0.85; }
+  button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  footer {
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  @media (max-width: 480px) {
+    form { flex-direction: column; }
+    button { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>AI Ops Copilot</h1>
+    <div class="status"><span class="dot"></span>System online</div>
+  </header>
+
+  <p class="lede">Describe a Kubernetes problem below. The agent checks live cluster state and internal runbooks before answering.</p>
+
+  <div class="card">
+    <div class="console" id="console">
+      <div class="entry empty" id="empty-state">Log is empty. Ask about a pod, deployment, or service below.</div>
+    </div>
+    <form id="ask-form" onsubmit="return handleSubmit(event)">
+      <div class="input-shell">
+        <span class="prompt-char">&gt;</span>
+        <input id="question" type="text" placeholder="e.g. my pod is stuck in CrashLoopBackOff" autocomplete="off">
+      </div>
+      <button type="submit" id="ask-btn">Diagnose</button>
+    </form>
+  </div>
+
+  <footer>Responses can take up to 60s — routed through a public tunnel to a home Kubernetes cluster.</footer>
+</div>
+
+<script>
+const API_URL = "https://bow-exchanges-talking-wav.trycloudflare.com/diagnose";
+const API_KEY = "7511cbe447693462008585d9af2fb10a3467b33923bf0f32";
+
+function timestamp() {
+  return new Date().toLocaleTimeString([], { hour12: false });
+}
+
+function handleSubmit(event) {
+  event.preventDefault();
+  ask();
+  return false;
+}
+
+async function ask() {
+  const input = document.getElementById("question");
+  const q = input.value.trim();
+  if (!q) return;
+
+  const consoleEl = document.getElementById("console");
+  const emptyState = document.getElementById("empty-state");
+  if (emptyState) emptyState.remove();
+
+  const btn = document.getElementById("ask-btn");
+  btn.disabled = true;
+
+  const entry = document.createElement("div");
+  entry.className = "entry";
+  const answerId = "a-" + Date.now();
+  entry.innerHTML = `
+    <div><span class="ts">[${timestamp()}]</span><span class="q">${escapeHtml(q)}</span></div>
+    <span class="a pending" id="${answerId}">analyzing...</span>
+  `;
+  consoleEl.appendChild(entry);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+  input.value = "";
+
+  const answerEl = document.getElementById(answerId);
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+      body: JSON.stringify({ question: q }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      answerEl.className = "a error";
+      answerEl.textContent = `request failed \u2014 server returned status ${res.status}`;
+    } else {
+      const data = await res.json();
+      answerEl.className = "a ok";
+      answerEl.textContent = data.answer || JSON.stringify(data);
+    }
+  } catch (err) {
+    answerEl.className = "a error";
+    answerEl.textContent = `request failed \u2014 ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
