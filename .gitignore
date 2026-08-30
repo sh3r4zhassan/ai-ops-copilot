@@ -8,3 +8,6 @@ operator/incident-operator
 actions-runner/
 mlflow_data/
 mlflow_export.zip
+aws/
+awscliv2.zip
+cloudflared.deb
