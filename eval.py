@@ -9,7 +9,7 @@ from eval_dataset import EVAL_QUESTIONS
 from tools import search_runbooks
 
 AGENT_URL = "http://localhost:5000/diagnose"
-API_KEY = "your-api-key-here"
+API_KEY = "7511cbe447693462008585d9af2fb10a3467b33923bf0f32"
 
 judge_llm = ChatOllama(model="llama3.2:3b")
 judge_embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -24,7 +24,13 @@ for item in EVAL_QUESTIONS:
         headers={"X-API-Key": API_KEY},
         json={"question": question},
     )
-    answer = response.json().get("answer", "")
+    body = response.json()
+    answer = body.get("answer", "")
+
+    if response.status_code != 200 or "error" in body:
+        print(f"WARNING: request failed for '{question}' \u2014 status {response.status_code}: {body}")
+    else:
+        print(f"Collected response for: {question}")
 
     records.append({
         "question": question,
@@ -32,7 +38,6 @@ for item in EVAL_QUESTIONS:
         "answer": answer,
         "ground_truth": item["ground_truth"],
     })
-    print(f"Collected response for: {question}")
 
 dataset = Dataset.from_list(records)
 

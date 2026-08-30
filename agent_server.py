@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 API_KEY = os.getenv("API_KEY", "")
 
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["30 per hour"])
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["90 per hour"])
 
 INJECTION_PATTERNS = [
     "ignore previous instructions",
@@ -33,7 +33,7 @@ def strip_if_leaked(answer: str) -> str:
 
 
 @app.route("/diagnose", methods=["POST"])
-@limiter.limit("10 per hour")
+@limiter.limit("90 per hour")
 def diagnose():
     if API_KEY and request.headers.get("X-API-Key") != API_KEY:
         return jsonify({"error": "unauthorized"}), 401
