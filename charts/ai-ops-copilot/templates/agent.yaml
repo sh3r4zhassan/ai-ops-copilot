@@ -21,6 +21,8 @@ spec:
               value: ollama
             - name: MCP_SERVER_URL
               value: http://mcp-server:8080/
+            - name: API_KEY
+              value: "{{ .Values.agent.apiKey }}"
           ports:
             - containerPort: 5000
 ---

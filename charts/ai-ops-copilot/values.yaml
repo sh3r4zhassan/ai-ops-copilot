@@ -10,6 +10,7 @@ mcpServer:
 agent:
   image: ai-ops-copilot-agent
   tag: 1477b0c
+  apiKey: "7511cbe447693462008585d9af2fb10a3467b33923bf0f32"
 operator:
   image: ai-ops-copilot-operator
   tag: 1477b0c

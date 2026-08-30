@@ -6,3 +6,5 @@ qdrant_storage/
 mcp-server/k8s-mcp-server
 operator/incident-operator
 actions-runner/
+mlflow_data/
+mlflow_export.zip

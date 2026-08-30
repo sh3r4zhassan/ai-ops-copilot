@@ -1,11 +1,16 @@
+import os
 from flask import Flask, request, jsonify
 from agent import run_agent
 
 app = Flask(__name__)
+API_KEY = os.getenv("API_KEY", "")
 
 
 @app.route("/diagnose", methods=["POST"])
 def diagnose():
+    if API_KEY and request.headers.get("X-API-Key") != API_KEY:
+        return jsonify({"error": "unauthorized"}), 401
+
     data = request.get_json()
     question = data.get("question", "")
     answer = run_agent(question)
