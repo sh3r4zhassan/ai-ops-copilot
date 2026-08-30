@@ -2,6 +2,7 @@ import requests
 from datasets import Dataset
 from ragas import evaluate
 from ragas.metrics import faithfulness, answer_relevancy, context_precision
+from ragas.run_config import RunConfig
 from langchain_community.chat_models import ChatOllama
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
@@ -46,6 +47,7 @@ result = evaluate(
     metrics=[faithfulness, answer_relevancy, context_precision],
     llm=judge_llm,
     embeddings=judge_embeddings,
+    run_config=RunConfig(max_workers=1, timeout=300),
 )
 
 print(result)
