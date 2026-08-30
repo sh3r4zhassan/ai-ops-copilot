@@ -6,11 +6,11 @@ ollama:
   modelsPath: /usr/share/ollama/.ollama
 mcpServer:
   image: ai-ops-copilot-mcp-server
-  tag: 4e695b2
+  tag: d7900b5
 agent:
   image: ai-ops-copilot-agent
-  tag: 4e695b2
+  tag: d7900b5
   apiKey: "7511cbe447693462008585d9af2fb10a3467b33923bf0f32"
 operator:
   image: ai-ops-copilot-operator
-  tag: 4e695b2
+  tag: d7900b5
