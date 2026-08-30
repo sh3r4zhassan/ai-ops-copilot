@@ -31,7 +31,9 @@ kind: Service
 metadata:
   name: agent
 spec:
+  type: NodePort
   selector: { app: agent }
   ports:
     - port: 5000
       targetPort: 5000
+      nodePort: 30500
