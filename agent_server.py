@@ -14,7 +14,7 @@ API_KEY = os.getenv("API_KEY", "")
 limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["60 per hour"])
 
 INCIDENT_GROUP = "aiops.example.com"
-INCIDENT_VERSION = "v1"
+INCIDENT_VERSION = "v1alpha1"
 INCIDENT_PLURAL = "incidents"
 NAMESPACE = "default"
 
