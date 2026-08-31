@@ -1,7 +1,14 @@
 import os
+import socket
 import smtplib
 from email.mime.text import MIMEText
 from kubernetes import client, config
+
+_orig_getaddrinfo = socket.getaddrinfo
+
+
+def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    return _orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
 
 
 def send_email(subject, body):
@@ -20,10 +27,14 @@ def send_email(subject, body):
     msg["From"] = username
     msg["To"] = to_addr
 
-    with smtplib.SMTP(host, port) as server:
-        server.starttls()
-        server.login(username, password)
-        server.sendmail(username, [to_addr], msg.as_string())
+    socket.getaddrinfo = _ipv4_only_getaddrinfo
+    try:
+        with smtplib.SMTP(host, port, timeout=15) as server:
+            server.starttls()
+            server.login(username, password)
+            server.sendmail(username, [to_addr], msg.as_string())
+    finally:
+        socket.getaddrinfo = _orig_getaddrinfo
 
 
 def main():
