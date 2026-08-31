@@ -9,10 +9,10 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from eval_dataset import EVAL_QUESTIONS
 from tools import search_runbooks
 
-AGENT_URL = "http://localhost:5000/diagnose"
+AGENT_URL = "http://localhost:30500/diagnose"
 API_KEY = "7511cbe447693462008585d9af2fb10a3467b33923bf0f32"
 
-judge_llm = ChatOllama(model="llama3.2:3b", base_url="http://localhost:31434")
+judge_llm = ChatOllama(model="llama3.2:3b", base_url="http://localhost:31434", format="json")
 judge_embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 records = []

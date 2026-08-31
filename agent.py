@@ -39,7 +39,7 @@ def call_llm(prompt: str) -> str:
     return response.json()["response"]
 
 
-def run_agent(user_question: str, max_steps: int = 5) -> str:
+def run_agent(user_question: str, max_steps: int = 7) -> str:
     transcript = f"{SYSTEM_PROMPT}\n\nUser question: {user_question}\n"
     tools_used = 0
 
