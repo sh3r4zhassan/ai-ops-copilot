@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: weekly-liveness-report
+spec:
+  schedule: "0 9 * * 1"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: weekly-summary-sa
+          containers:
+            - name: weekly-summary
+              image: ai-ops-copilot-weekly-summary:latest
+              imagePullPolicy: Never
+              envFrom:
+                - secretRef:
+                    name: smtp-credentials
+                    optional: true
+          restartPolicy: OnFailure
