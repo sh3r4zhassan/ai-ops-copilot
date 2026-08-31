@@ -83,6 +83,14 @@
     color: var(--ink);
   }
 
+  h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 12px;
+    color: var(--ink);
+  }
+
   .lede {
     color: var(--muted);
     font-size: 15px;
@@ -99,6 +107,10 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
 
+  .card + .card { margin-top: 20px; }
+
+  .card-body { padding: 16px; }
+
   form {
     display: flex;
     gap: 10px;
@@ -113,12 +125,14 @@
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 0 4px 0 14px;
+    margin-bottom: 10px;
   }
 
   .prompt-char {
     font-family: 'JetBrains Mono', monospace;
     color: var(--muted);
     margin-right: 6px;
+    white-space: nowrap;
   }
 
   input[type="text"] {
@@ -150,7 +164,7 @@
     color: #06231F;
     border: none;
     border-radius: 8px;
-    padding: 0 20px;
+    padding: 10px 20px;
     cursor: pointer;
     transition: opacity 0.15s ease;
   }
@@ -158,6 +172,11 @@
   button:hover { opacity: 0.85; }
   button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
   button:disabled { opacity: 0.5; cursor: default; }
+
+  button.approve-btn {
+    background: var(--alert);
+    color: #2A1400;
+  }
 
   .divider {
     border: none;
@@ -210,6 +229,15 @@
     font-style: normal;
   }
 
+  #incident-status {
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--console-text);
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
+
   footer {
     margin-top: 16px;
     font-family: 'JetBrains Mono', monospace;
@@ -247,7 +275,20 @@
     </div>
   </div>
 
-  <footer>Responses can take up to 60s — routed through a Kubernetes cluster running at home.</footer>
+  <div class="card">
+    <div class="card-body">
+      <h2>Trigger &amp; Approve Incident</h2>
+      <div class="input-shell">
+        <span class="prompt-char">pod:</span>
+        <input id="pod-name" type="text" placeholder="e.g. broken-app-c69d4d577-wfz5n" autocomplete="off">
+      </div>
+      <button id="trigger-btn" onclick="triggerIncident()">Trigger Incident</button>
+      <button id="approve-btn" class="approve-btn" onclick="approveIncident()" style="display:none;margin-left:10px">Approve &amp; Resolve</button>
+      <div id="incident-status"></div>
+    </div>
+  </div>
+
+  <footer>Responses can take up to 60s - routed through a Kubernetes cluster running at home.</footer>
 </div>
 
 <script>
@@ -302,7 +343,7 @@ async function ask() {
 
     if (!res.ok) {
       answerEl.className = "a error";
-      answerEl.textContent = `request failed \u2014 server returned status ${res.status}`;
+      answerEl.textContent = `request failed - server returned status ${res.status}`;
     } else {
       const data = await res.json();
       answerEl.className = "a ok";
@@ -310,7 +351,7 @@ async function ask() {
     }
   } catch (err) {
     answerEl.className = "a error";
-    answerEl.textContent = `request failed \u2014 ${err.message}`;
+    answerEl.textContent = `request failed - ${err.message}`;
   } finally {
     btn.disabled = false;
     consoleEl.scrollTop = consoleEl.scrollHeight;
@@ -321,6 +362,82 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+let currentIncidentName = null;
+let pollTimer = null;
+
+async function triggerIncident() {
+  const podName = document.getElementById("pod-name").value.trim();
+  if (!podName) return;
+
+  const statusEl = document.getElementById("incident-status");
+  const triggerBtn = document.getElementById("trigger-btn");
+  document.getElementById("approve-btn").style.display = "none";
+  triggerBtn.disabled = true;
+  statusEl.textContent = "Creating incident...";
+
+  try {
+    const res = await fetch(API_URL.replace("/diagnose", "/incidents"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+      body: JSON.stringify({ podName })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      statusEl.textContent = `error: ${data.error || res.status}`;
+      triggerBtn.disabled = false;
+      return;
+    }
+    currentIncidentName = data.incidentName;
+    statusEl.textContent = `Incident ${currentIncidentName} created. Waiting for diagnosis...`;
+    pollIncident();
+  } catch (err) {
+    statusEl.textContent = `error: ${err.message}`;
+    triggerBtn.disabled = false;
+  }
+}
+
+async function pollIncident() {
+  const statusEl = document.getElementById("incident-status");
+  const triggerBtn = document.getElementById("trigger-btn");
+
+  if (pollTimer) clearTimeout(pollTimer);
+
+  let data;
+  try {
+    const res = await fetch(API_URL.replace("/diagnose", `/incidents/${currentIncidentName}`), {
+      headers: { "X-API-Key": API_KEY }
+    });
+    data = await res.json();
+  } catch (err) {
+    statusEl.textContent = `error polling incident: ${err.message}`;
+    triggerBtn.disabled = false;
+    return;
+  }
+
+  if (data.phase === "Diagnosed" && !data.approved) {
+    statusEl.textContent = `Diagnosis:\n${data.diagnosis}`;
+    document.getElementById("approve-btn").style.display = "inline-block";
+    triggerBtn.disabled = false;
+  } else if (data.approved) {
+    statusEl.textContent = `Diagnosis:\n${data.diagnosis}\n\nApproved - operator is resolving.`;
+    triggerBtn.disabled = false;
+  } else {
+    statusEl.textContent = "Waiting for diagnosis...";
+    pollTimer = setTimeout(pollIncident, 3000);
+  }
+}
+
+async function approveIncident() {
+  const approveBtn = document.getElementById("approve-btn");
+  approveBtn.disabled = true;
+  await fetch(API_URL.replace("/diagnose", `/incidents/${currentIncidentName}/approve`), {
+    method: "POST",
+    headers: { "X-API-Key": API_KEY }
+  });
+  approveBtn.style.display = "none";
+  pollIncident();
 }
 </script>
 </body>

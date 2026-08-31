@@ -46,7 +46,7 @@ Everything runs on one Ubuntu laptop acting as a single-node k3s cluster - a del
 | Path | What it is | Why it exists |
 |---|---|---|
 | `agent.py` | The ReAct reasoning loop | Core agent logic: calls the LLM, parses its JSON response, invokes tools, loops until a real `final_answer` is reached. Structurally requires at least one tool call before accepting a final answer, to prevent the model from "answering" with just a stated intention. |
-| `agent_server.py` | Flask API wrapping the agent | Exposes `/diagnose` over HTTP. Handles the API key check, CORS, rate limiting, basic prompt-injection input filtering, and a check against the agent leaking its own system prompt back to a caller. |
+| `agent_server.py` | Flask API wrapping the agent | Exposes `/diagnose` over HTTP, plus `/incidents`, `/incidents/<name>`, and `/incidents/<name>/approve` for triggering and approving incidents directly from the frontend. Handles the API key check, CORS, rate limiting, basic prompt-injection input filtering, and a check against the agent leaking its own system prompt back to a caller. |
 | `tools.py` | The agent's two tools | `search_runbooks` (queries Qdrant) and `get_pod_status` (queries the MCP server for live cluster state). |
 | `mcp_tools.py` | MCP client wrapper | Connects `tools.py` to the Go MCP server over `streamable_http_client`. |
 | `ingest.py` | RAG ingestion script | Chunks every file in `data/runbooks/`, embeds them, and loads them into Qdrant. Re-run whenever the runbook corpus changes. |
@@ -67,7 +67,7 @@ A Go server implementing the Model Context Protocol over StreamableHTTP, giving 
 A Go Kubernetes operator built with `controller-runtime`, managing a custom `Incident` resource (`crd.yaml` defines the CRD; `types.go` defines its Go structs). Watches `Incident` objects through a reconcile loop, calls the agent for a diagnosis, and - only once a human sets `spec.approved: true` - deletes the affected pod to trigger a fresh, hopefully-healthy restart. `broken-app.yaml` is a deliberately crash-looping test deployment; `incident-sample.yaml` is an example manually-created incident.
 
 ### `charts/ai-ops-copilot/`
-The Helm chart deploying everything - one template per service (`agent.yaml`, `mcp-server.yaml`, `operator.yaml`, `qdrant.yaml`, `ollama.yaml`), plus RBAC. `values.yaml` holds each service's image tag, automatically bumped by CI after every build - this file changing is what ArgoCD watches for to trigger a redeploy.
+The Helm chart deploying everything - one template per service (`agent.yaml`, `mcp-server.yaml`, `operator.yaml`, `qdrant.yaml`, `ollama.yaml`), plus RBAC. `values.yaml` holds each service's image tag, automatically bumped by CI after every build - this file changing is what ArgoCD watches for to trigger a redeploy. `agent-rbac.yaml` gives the agent its own narrowly-scoped ServiceAccount (`agent-sa`) - permission to create, read, and patch `Incident` objects, but no permission to delete pods at all; only the operator's own `aiops-sa` can actually carry out remediation.
 
 ### `frontend/`
 `index.html` - a single-file, dependency-light chat interface. Styled as an operations console (dark theme, monospace log stream) rather than a generic chat UI, since this is genuinely an incident-response tool. Talks directly to the public API over HTTPS.
@@ -80,6 +80,21 @@ The CI pipeline, running on a **self-hosted** GitHub Actions runner (since it ne
 
 ### `argocd-application.yaml`
 The ArgoCD `Application` custom resource pointing at this repo's `charts/ai-ops-copilot` path on `main`, with automated sync and pruning enabled - the actual GitOps wiring that makes `git push` alone result in a live redeploy.
+
+---
+
+## How trigger-and-approve works, end to end
+
+The frontend's "Trigger & Approve Incident" section is a real, clickable path through the same lifecycle the operator has supported since Step 5 - previously only reachable via `kubectl` by hand.
+
+1. **You enter a pod name and click "Trigger Incident."** The frontend calls `POST /incidents` on the Flask API, which creates a real `Incident` custom resource in the cluster (`spec.approved: false`) using the Python `kubernetes` client, authenticated as the `agent-sa` ServiceAccount.
+2. **The operator's existing reconcile loop picks it up immediately** - it was already watching every `Incident` object in the namespace, exactly as it has since Step 5. Nothing about the operator itself changed to support this; it has no idea whether an `Incident` was created by a human running `kubectl apply` or by the frontend calling the API.
+3. **The operator calls the agent for a diagnosis**, then writes the result into the `Incident`'s `status.diagnosis` field and sets `status.phase` to `Diagnosed`.
+4. **The frontend polls `GET /incidents/<name>` every few seconds** until it sees `phase: Diagnosed`, then displays the real diagnosis text and reveals the **Approve & Resolve** button.
+5. **Clicking approve calls `POST /incidents/<name>/approve`**, which patches `spec.approved: true` on the same object - the identical field the earlier manual `kubectl patch` command set by hand.
+6. **The operator's reconcile loop fires again** (any change to a watched object retriggers it), sees `approved: true`, and deletes the affected pod to trigger a fresh restart - the actual remediation step, carried out only by the operator's own `aiops-sa`, never directly by the frontend or the agent.
+
+The key design point: **the agent can request and the human can approve, but only the operator can act.** The new `agent-sa` ServiceAccount has no `delete` permission on pods at all - it can create and read `Incident` objects and flip the `approved` field, nothing more. This mirrors the same human-approval-gate principle the project has had from the start, just made reachable through a UI instead of a terminal.
 
 ---
 

@@ -5,3 +5,4 @@ flask
 mcp
 flask-cors
 flask-limiter
+kubernetes

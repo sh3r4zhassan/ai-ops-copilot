@@ -10,6 +10,7 @@ spec:
     metadata:
       labels: { app: agent }
     spec:
+      serviceAccountName: agent-sa
       containers:
         - name: agent
           image: "{{ .Values.agent.image }}:{{ .Values.agent.tag }}"
