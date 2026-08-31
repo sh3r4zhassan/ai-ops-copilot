@@ -18,3 +18,5 @@ spec:
           env:
             - name: AGENT_URL
               value: http://agent:5000/diagnose
+            - name: API_KEY
+              value: "{{ .Values.agent.apiKey }}"

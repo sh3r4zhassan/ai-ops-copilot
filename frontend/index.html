@@ -401,6 +401,7 @@ async function triggerIncident() {
 async function pollIncident() {
   const statusEl = document.getElementById("incident-status");
   const triggerBtn = document.getElementById("trigger-btn");
+  const approveBtn = document.getElementById("approve-btn");
 
   if (pollTimer) clearTimeout(pollTimer);
 
@@ -416,13 +417,17 @@ async function pollIncident() {
     return;
   }
 
-  if (data.phase === "Diagnosed" && !data.approved) {
+  if (data.phase === "Resolved") {
+    statusEl.textContent = `Diagnosis:\n${data.diagnosis}\n\n\u25CF RESOLVED \u2014 pod was deleted and rescheduled after your approval.`;
+    approveBtn.style.display = "none";
+    triggerBtn.disabled = false;
+  } else if (data.phase === "Diagnosed" && !data.approved) {
     statusEl.textContent = `Diagnosis:\n${data.diagnosis}`;
-    document.getElementById("approve-btn").style.display = "inline-block";
+    approveBtn.style.display = "inline-block";
     triggerBtn.disabled = false;
   } else if (data.approved) {
-    statusEl.textContent = `Diagnosis:\n${data.diagnosis}\n\nApproved - operator is resolving.`;
-    triggerBtn.disabled = false;
+    statusEl.textContent = `Diagnosis:\n${data.diagnosis}\n\nApproved \u2014 waiting for the operator to resolve...`;
+    pollTimer = setTimeout(pollIncident, 3000);
   } else {
     statusEl.textContent = "Waiting for diagnosis...";
     pollTimer = setTimeout(pollIncident, 3000);
