@@ -3,30 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Ops Copilot</title>
+<title>PodSentinel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #F5F6F8;
-    --card: #FFFFFF;
-    --ink: #1B2430;
-    --muted: #6B7685;
-    --console-bg: #10151D;
+    --bg: #0B0F16;
+    --card: #131A24;
+    --ink: #E6EAF0;
+    --muted: #7C8798;
+    --console-bg: #0A0E14;
     --console-text: #D7DCE3;
-    --console-muted: #8891A0;
+    --console-muted: #6E7A8C;
     --signal: #5EEAD4;
     --alert: #F2994A;
-    --danger: #F26D6D;
-    --line: #E2E5EA;
+    --danger: #F27272;
+    --line: #232C3A;
   }
 
   * { box-sizing: border-box; }
 
   body {
     margin: 0;
-    background: var(--paper);
+    background: var(--bg);
     color: var(--ink);
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -44,7 +44,7 @@
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
   }
 
   .status {
@@ -63,7 +63,7 @@
     height: 8px;
     border-radius: 50%;
     background: var(--signal);
-    box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.18);
+    box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.15);
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -80,13 +80,14 @@
     font-weight: 700;
     letter-spacing: -0.01em;
     margin: 0;
+    color: var(--ink);
   }
 
   .lede {
     color: var(--muted);
     font-size: 15px;
     line-height: 1.6;
-    margin: 0 0 20px;
+    margin: 0 0 22px;
     max-width: 54ch;
   }
 
@@ -95,51 +96,7 @@
     border: 1px solid var(--line);
     border-radius: 14px;
     padding: 4px;
-    box-shadow: 0 1px 2px rgba(20, 24, 32, 0.04);
-  }
-
-  .console {
-    background: var(--console-bg);
-    border-radius: 10px;
-    padding: 18px 18px 6px;
-    height: 340px;
-    overflow-y: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    line-height: 1.7;
-  }
-
-  .console::-webkit-scrollbar { width: 8px; }
-  .console::-webkit-scrollbar-thumb { background: #2A3342; border-radius: 4px; }
-
-  .entry { margin-bottom: 14px; }
-
-  .ts {
-    color: var(--console-muted);
-    margin-right: 8px;
-  }
-
-  .q { color: var(--console-text); }
-  .q::before { content: "> "; color: var(--signal); }
-
-  .a {
-    color: var(--console-text);
-    white-space: pre-wrap;
-    display: block;
-    margin-top: 4px;
-    padding-left: 16px;
-    border-left: 2px solid #232C3A;
-  }
-
-  .a.pending { color: var(--alert); }
-  .a.error { color: var(--danger); }
-  .a.pending::before { content: "\25CF "; }
-  .a.ok::before { content: "\25CF "; color: var(--signal); }
-  .a.error::before { content: "\25CF "; }
-
-  .empty {
-    color: var(--console-muted);
-    font-style: normal;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
 
   form {
@@ -152,7 +109,7 @@
     flex: 1;
     display: flex;
     align-items: center;
-    background: var(--paper);
+    background: var(--bg);
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 0 4px 0 14px;
@@ -175,6 +132,10 @@
     outline: none;
   }
 
+  input[type="text"]::placeholder {
+    color: var(--console-muted);
+  }
+
   input[type="text"]:focus-visible {
     outline: 2px solid var(--signal);
     outline-offset: 2px;
@@ -185,8 +146,8 @@
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 600;
     font-size: 14px;
-    background: var(--ink);
-    color: #fff;
+    background: var(--signal);
+    color: #06231F;
     border: none;
     border-radius: 8px;
     padding: 0 20px;
@@ -197,6 +158,57 @@
   button:hover { opacity: 0.85; }
   button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
   button:disabled { opacity: 0.5; cursor: default; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 0;
+  }
+
+  .console {
+    background: var(--console-bg);
+    border-radius: 10px;
+    padding: 18px 18px 6px;
+    height: 380px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 4px;
+  }
+
+  .console::-webkit-scrollbar { width: 8px; }
+  .console::-webkit-scrollbar-thumb { background: #1E2733; border-radius: 4px; }
+
+  .entry { margin-bottom: 14px; }
+
+  .ts {
+    color: var(--console-muted);
+    margin-right: 8px;
+  }
+
+  .q { color: var(--console-text); }
+  .q::before { content: "> "; color: var(--signal); }
+
+  .a {
+    color: var(--console-text);
+    white-space: pre-wrap;
+    display: block;
+    margin-top: 4px;
+    padding-left: 16px;
+    border-left: 2px solid #1C2430;
+  }
+
+  .a.pending { color: var(--alert); }
+  .a.error { color: var(--danger); }
+  .a.pending::before { content: "\25CF "; }
+  .a.ok::before { content: "\25CF "; color: var(--signal); }
+  .a.error::before { content: "\25CF "; }
+
+  .empty {
+    color: var(--console-muted);
+    font-style: normal;
+  }
 
   footer {
     margin-top: 16px;
@@ -215,16 +227,13 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>AI Ops Copilot</h1>
+    <h1>PodSentinel</h1>
     <div class="status"><span class="dot"></span>System online</div>
   </header>
 
   <p class="lede">Describe a Kubernetes problem below. The agent checks live cluster state and internal runbooks before answering.</p>
 
   <div class="card">
-    <div class="console" id="console">
-      <div class="entry empty" id="empty-state">Log is empty. Ask about a pod, deployment, or service below.</div>
-    </div>
     <form id="ask-form" onsubmit="return handleSubmit(event)">
       <div class="input-shell">
         <span class="prompt-char">&gt;</span>
@@ -232,13 +241,17 @@
       </div>
       <button type="submit" id="ask-btn">Diagnose</button>
     </form>
+    <hr class="divider">
+    <div class="console" id="console">
+      <div class="entry empty" id="empty-state">Log is empty. Ask about a pod, deployment, or service above.</div>
+    </div>
   </div>
 
-  <footer>Responses can take up to 60s — routed through a public tunnel to a home Kubernetes cluster.</footer>
+  <footer>Responses can take up to 60s — routed through a Kubernetes cluster running at home.</footer>
 </div>
 
 <script>
-const API_URL = "https://bow-exchanges-talking-wav.trycloudflare.com/diagnose";
+const API_URL = "https://api.sherazhassan.com/diagnose";
 const API_KEY = "7511cbe447693462008585d9af2fb10a3467b33923bf0f32";
 
 function timestamp() {
